@@ -1,0 +1,194 @@
+# Guía de Diseño: Presentaciones Premium con Estética de Cápsula
+
+## 🎨 Concepto Visual
+
+**Tema Principal:** Cápsula que se abre para revelar todo el potencial  
+**Estilo:** Agencia de marketing premium con elementos 3D fotorealistas
+
+---
+
+## 🌈 Paleta de Colores
+
+| Color | Código HEX | Uso Principal |
+|-------|------------|---------------|
+| **Magenta** | `#FF0080` | Color primario - energía, creatividad |
+| **Púrpura** | `#8B00FF` | Color secundario - innovación |
+| **Azul Eléctrico** | `#00D4FF` | Color de acento - tecnología |
+| **Oscuro** | `#1a0b2e` | Fondos profundos y texto |
+| **Claro** | `#FFFFFF` | Contraste y espacios en blanco |
+
+---
+
+## 📝 Tipografías
+
+### Títulos y Headers
+- **Fuente:** Syncopate Bold
+- **Estilo:** Sans-serif geométrica, futurista
+- **Formato:** Mayúsculas con tracking amplio
+
+### Subtítulos
+- **Fuente:** Syncopate Regular
+- **Uso:** Secciones secundarias
+
+### Cuerpo de Texto
+- **Fuente:** Poppins
+- **Pesos disponibles:**
+  - Light 300
+  - Regular 400
+  - Bold 700
+
+---
+
+## 🖼️ Diseño de Portada
+
+### Fondo
+- **Tipo:** Gradiente radial
+- **Centro:** `#1a0b2e` (oscuro)
+- **Bordes:** `#FF0080` (magenta)
+- **Efectos:** Nebulosa púrpura y azul `#00D4FF`
+
+### Elemento Central
+- **Objeto:** Cápsula 3D fotorealista flotando
+- **Material:** Metálico cromado con reflejos
+- **Extremos:** Textura orgánica (leopardo o similar)
+- **Centro:** Transparente con líquido brillante magenta-azul en movimiento
+
+### Elementos Orbitales
+- Espiral dorada delgada
+- Cubo de cristal
+- Splash de líquido congelado
+- Partículas de brillo dorado dispersas
+
+### Tipografía de Portada
+- **Título Principal:**
+  - Fuente: Syncopate Bold
+  - Color: Blanco puro
+  - Tamaño: 72pt
+  - Inclinación: Italic 5°
+- **Subtítulo:**
+  - Fuente: Poppins Light
+  - Color: Blanco
+  - Tamaño: 32pt
+
+---
+
+## 🎯 Elementos de Diseño
+
+### Separadores
+- **Tipo:** Líneas divisorias
+- **Estilo:** Gradiente horizontal magenta `#FF0080` a azul `#00D4FF`
+- **Grosor:** 2-4px
+
+### Headers de Sección
+- **Fondo:** Barra horizontal magenta `#FF0080`
+- **Altura:** 80-100px
+- **Texto:** Syncopate Bold blanco, alineado a la izquierda
+
+### Bullet Points
+- **Opción 1:** Círculos pequeños rellenos `#FF0080`
+- **Opción 2:** Iconos 3D abstractos
+  - Cápsula miniatura
+  - Espiral
+  - Cristal
+
+### Fondos Alternativos
+- **Contenido denso:** Blanco `#FFFFFF`
+- **Alto impacto:** `#1a0b2e`
+- **Transiciones:** Gradientes vibrantes
+
+---
+
+## ✨ Estilo Visual General
+
+### Características Principales
+- **Estética:** Cinematográfica y premium
+- **Renderizado:** 3D fotorealista con iluminación volumétrica
+- **Espaciado:** Mucho espacio negativo en contenido
+- **Impacto:** Visual fuerte en transiciones
+
+### Formas Orgánicas Flotantes
+- Splash de líquido
+- Espirales
+- Geometrías cristalinas
+- Partículas brillantes
+
+### Elemento Recurrente: Cápsulas 3D
+- **Estados:** Cerradas, abiertas, seccionadas
+- **Contenido:** Líquidos brillantes internos
+- **Material:** Fotorealista con reflejos
+
+### Efectos de Luz
+- Lens flares sutiles
+- Halos
+- Glows en magenta y azul
+
+---
+
+## ⚠️ Reglas de Contenido
+
+### Placeholders de Texto
+- ✅ "TÍTULO PRINCIPAL"
+- ✅ "SUBTÍTULO"
+- ✅ "CONTENIDO"
+- ✅ "DESCRIPCIÓN"
+- ✅ "PUNTO CLAVE"
+
+### Prohibiciones
+- ❌ Nombres de marcas específicas
+- ❌ Logotipos corporativos
+- ❌ Referencias comerciales directas
+
+---
+
+## 📋 Estructura de Presentación
+
+### Tipos de Diapositivas
+1. **Portada** - Impacto visual máximo con cápsula central
+2. **Índice** - Navegación clara con elementos flotantes
+3. **Contenido** - Información balanceada con fondos alternos
+4. **Destacado** - Puntos clave con efectos de luz
+5. **Cierre** - Llamada a la acción con gradientes vibrantes
+
+### Coherencia Visual
+- Mantener elementos consistentes en todas las diapositivas
+- Aplicar paleta de colores uniformemente
+- Respetar jerarquía tipográfica
+- Usar cápsulas 3D como hilo conductor
+
+---
+
+## 💻 Especificaciones Técnicas
+
+### Optimización
+- **Dispositivo:** Computadora/Desktop
+- **Resolución:** Full HD (1920x1080) o superior
+- **Formato:** Presentación digital
+- **Renderizado:** Alta calidad para elementos 3D
+
+### Consideraciones de Rendimiento
+- Optimizar imágenes 3D para carga rápida
+- Usar gradientes CSS cuando sea posible
+- Mantener efectos de luz sutiles pero impactantes
+
+---
+
+## 🎨 Aplicación Práctica
+
+### Para Diseñadores
+- Usar herramientas 3D para crear cápsulas fotorealistas
+- Aplicar iluminación volumétrica consistente
+- Mantener balance entre impacto visual y legibilidad
+
+### Para Desarrolladores Web
+- Implementar gradientes CSS para fondos
+- Usar animaciones sutiles para elementos flotantes
+- Optimizar carga de assets 3D
+
+### Para Creadores de Contenido
+- Mantener textos concisos y impactantes
+- Usar placeholders genéricos
+- Enfocar en jerarquía visual clara
+
+---
+
+*Esta guía garantiza una identidad visual premium y cohesiva para presentaciones de alto impacto profesional sin referencias comerciales específicas.*
