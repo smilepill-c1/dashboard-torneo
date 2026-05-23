@@ -161,7 +161,7 @@ st.markdown("""
 # ----------------------------------------------------
 # VISUALIZACIÓN DE LOGOTIPOS EN ENCABEZADO SIMÉTRICO
 # ----------------------------------------------------
-col_logo1, col_text, col_logo2 = st.columns([1, 6, 1])
+col_logo1, col_text, col_logo2 = st.columns([1, 4, 1])
 
 with col_logo1:
     if os.path.exists("SmilePill_All-in_blanco.png"):
@@ -299,12 +299,16 @@ with tab1:
     st.subheader("⚽ Marcador Mundialista - Puntos Netos Acumulados")
     st.info("Esta tabla presenta la clasificación del **Top 5** de escuadras del campeonato histórico. Se omiten penalizaciones de forma equitativa.")
     
-    df_general = df_final[df_final['SEDE'].isin(sedes_historicas)].copy()
+    # --- MODIFICACIÓN DE ENSENADA AL TORNEO GENERAL ---
+    sedes_competidoras = sedes_historicas + ["ENSENADA"]
+    df_general = df_final[df_final['SEDE'].isin(sedes_competidoras)].copy()
+    # ----------------------------------------------------
+    
     df_general_sorted = df_general.sort_values(by='Total Acumulado General', ascending=False)
     
     st.markdown("### 🥇 Líderes Actuales de Grupo")
     columnas_lideres = st.columns(4)
-    for idx, sede in enumerate(sedes_historicas):
+    for idx, sede in enumerate(sedes_competidoras): # Modificado para que muestre la tarjeta de Ensenada
         df_sede = df_general[df_general['SEDE'] == sede]
         col_idx = idx % 4
         if not df_sede.empty:
