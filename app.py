@@ -211,13 +211,20 @@ usa_gsheets = False
 conn = None
 
 try:
-    # Intentar conexión directa (st.connection maneja la búsqueda de secretos internamente)
+    # --- TEST DE CONECTIVIDAD BÁSICA (LECTURA PÚBLICA) ---
+    # Intentamos leer la hoja como un CSV público para verificar que el link y los permisos sean correctos
+    sheet_id = "1WaIxaJ4tuqNE5qkVif4JPOWx0HGmdVUV_-ISwRoBlug"
+    csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid=0"
+    test_df = pd.read_csv(csv_url)
+
+    # Si llegamos aquí, el link es público y accesible. Ahora intentamos la conexión de Streamlit.
     conn = st.connection("gsheets", type=GSheetsConnection)
     df_mayo = conn.read(worksheet="Mayo", ttl=2)
     usa_gsheets = True
 except Exception as e:
-    # Mostrar el error real en la barra lateral para diagnóstico
-    st.sidebar.error(f"Error de Conexión GSheets: {e}")
+    st.sidebar.error(f"⚠️ Error de Conexión: {e}")
+    # Si falló el test de CSV, el problema es el LINK o los PERMISOS de Google.
+    # Si el test de CSV pasó pero el conn.read falló, el problema es el NOMBRE DE LA PESTAÑA o los SECRETOS.
     archivo_local = "Puntos_Mayo_Local.xlsx"
     if os.path.exists(archivo_local):
         df_mayo = pd.read_excel(archivo_local)
