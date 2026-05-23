@@ -161,18 +161,18 @@ st.markdown("""
 # ----------------------------------------------------
 # VISUALIZACIÓN DE LOGOTIPOS EN ENCABEZADO SIMÉTRICO
 # ----------------------------------------------------
-col_logo1, col_text, col_logo2 = st.columns([1, 4, 1])
+col_logo1, col_text, col_logo2 = st.columns([1, 6, 1])
 
 with col_logo1:
     if os.path.exists("SmilePill_All-in_blanco.png"):
-        st.image("SmilePill_All-in_blanco.png", width=140)
+        st.image("SmilePill_All-in_blanco.png", width=200)
 
 with col_text:
     st.markdown('<div class="main-header">🏆 Líderes de Torneo Mundialista ⚽</div>', unsafe_allow_html=True)
 
 with col_logo2:
     if os.path.exists("image.png"):
-        st.image("image.png", width=140)
+        st.image("image.png", width=180)
 
 st.markdown('<div class="gradient-divider"></div>', unsafe_allow_html=True)
 
