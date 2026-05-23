@@ -35,6 +35,16 @@ st.markdown("""
         text-shadow: 0px 0px 25px rgba(255, 0, 128, 0.25);
     }
     
+    .sub-header {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 300;
+        font-size: 1.1rem;
+        color: #00D4FF;
+        text-align: center;
+        margin-bottom: 25px;
+        letter-spacing: 0.05em;
+    }
+    
     /* Línea divisoria gradiente estilo Prompt_HTML */
     .gradient-divider {
         height: 3px;
@@ -162,6 +172,7 @@ st.markdown("""
 
 # Títulos Principales de Portada
 st.markdown('<div class="main-header">🏆 Líderes de Torneo Mundialista ⚽</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-header">Estética Premium de Cápsula | Marcadores y Estadísticas Oficiales</div>', unsafe_allow_html=True)
 st.markdown('<div class="gradient-divider"></div>', unsafe_allow_html=True)
 
 # ----------------------------------------------------
@@ -169,43 +180,34 @@ st.markdown('<div class="gradient-divider"></div>', unsafe_allow_html=True)
 # ----------------------------------------------------
 @st.cache_data
 def cargar_datos_base():
-    # Cargamos el archivo de Excel original
+    # Cargamos el archivo de Excel original (Solo como historial)
     df = pd.read_excel("Tabla de Puntos.xlsx", header=None)
     
-    # Limpieza: Fila 1 contiene las cabeceras reales
-    df_clean = df.iloc[2:].copy()
+    # Tomamos solo las filas de datos y estrictamente las primeras 15 columnas (Marzo y Abril)
+    df_clean = df.iloc[2:, :15].copy()
     
-    # Asignar nombres de columna únicos y claros basados en la estructura del Excel
+    # Asignar nombres exactos a esas 15 columnas históricas
     df_clean.columns = [
         'SEDE', 'Numero', 'Equipo',
         'P. Porra Marzo', 'P. Actv.1 Marzo', 'P. Act. 3 Marzo', 'P. Act. 2 Slido Marzo', 'Penalizacion Marzo', 'Extras Marzo', 'Total puntos Marzo',
-        'P. Porra Abril', 'P. Actv.1 Abril', 'P. Act. 2 Slido Abril', 'P. Act. 3 Abril', 'Total puntos Abril',
-        'P. Porra Mayo', 'P. Actv.1 Mayo', 'P. Act. 2 Slido Mayo', 'P. Act. 3 Mayo', 'Total puntos Mayo'
+        'P. Porra Abril', 'P. Actv.1 Abril', 'P. Act. 2 Slido Abril', 'P. Act. 3 Abril', 'Total puntos Abril'
     ]
     
-    # Seleccionar las columnas que nos interesan (incluyendo desgloses de Marzo para calcular el neto sin penalización/extras)
-    columnas_interes = [
-        'SEDE', 'Numero', 'Equipo', 
-        'P. Porra Marzo', 'P. Actv.1 Marzo', 'P. Act. 3 Marzo', 'P. Act. 2 Slido Marzo', 
-        'Penalizacion Marzo', 'Extras Marzo', 'Total puntos Marzo',
-        'Total puntos Abril'
-    ]
-    df_base = df_clean[columnas_interes].copy()
+    # Limpiar nombres de Sedes para corregir codificación
+    df_clean['SEDE'] = df_clean['SEDE'].astype(str).str.replace('MAZATLN', 'MAZATLÁN')
+    df_clean['SEDE'] = df_clean['SEDE'].str.replace('MAZATL\ufffdN', 'MAZATLÁN')
+    df_clean['SEDE'] = df_clean['SEDE'].str.strip()
+    df_clean['Equipo'] = df_clean['Equipo'].astype(str).str.strip()
     
-    # Limpiar nombres de Sedes para corregir codificación corrupta (ej: MAZATLN)
-    df_base['SEDE'] = df_base['SEDE'].astype(str).str.replace('MAZATLN', 'MAZATLÁN')
-    df_base['SEDE'] = df_base['SEDE'].str.replace('MAZATL\ufffdN', 'MAZATLÁN')
-    df_base['SEDE'] = df_base['SEDE'].str.strip()
-    
-    # Convertir a numérico todas las columnas de interés numéricas
+    # Convertir a numérico todas las columnas numéricas
     columnas_numericas = [
         'P. Porra Marzo', 'P. Actv.1 Marzo', 'P. Act. 3 Marzo', 'P. Act. 2 Slido Marzo',
         'Penalizacion Marzo', 'Extras Marzo', 'Total puntos Marzo', 'Total puntos Abril'
     ]
     for col in columnas_numericas:
-        df_base[col] = pd.to_numeric(df_base[col], errors='coerce').fillna(0.0)
+        df_clean[col] = pd.to_numeric(df_clean[col], errors='coerce').fillna(0.0)
     
-    return df_base
+    return df_clean
 
 df_base = cargar_datos_base()
 sedes_historicas = sorted(df_base['SEDE'].dropna().unique().tolist())
@@ -225,6 +227,8 @@ SEDES_SOLO_MAYO = [
 usa_gsheets = False
 conn = None
 
+# Intentamos conectar a Google Sheets.
+# Si no está configurado en st.secrets, usamos el backup local de la cápsula.
 try:
     if "gsheets" in st.secrets:
         conn = st.connection("gsheets", type=GSheetsConnection)
@@ -237,6 +241,7 @@ except Exception as e:
     if os.path.exists(archivo_local):
         df_mayo = pd.read_excel(archivo_local)
     else:
+        # Inicializar archivo vacío con los equipos del excel base
         df_mayo = df_base[['SEDE', 'Equipo']].copy()
         df_mayo['P. Porra Mayo'] = 0.0
         df_mayo['P. Actv.1 Mayo'] = 0.0
@@ -244,17 +249,21 @@ except Exception as e:
         df_mayo['P. Act 3 Mayo'] = 0.0
         df_mayo.to_excel(archivo_local, index=False)
 
+# Asegurar tipos y columnas requeridas en los datos de Mayo
 columnas_mayo = ['P. Porra Mayo', 'P. Actv.1 Mayo', 'P. Act 2 Slido Mayo', 'P. Act 3 Mayo']
 for col in columnas_mayo:
     if col not in df_mayo.columns:
         df_mayo[col] = 0.0
     df_mayo[col] = pd.to_numeric(df_mayo[col], errors='coerce').fillna(0.0)
 
+# Calcular total de Mayo
 df_mayo['Total Mayo'] = df_mayo[columnas_mayo].sum(axis=1)
 
+# Asegurar limpieza de Sede y Equipo en df_mayo
 df_mayo['SEDE'] = df_mayo['SEDE'].astype(str).str.replace('MAZATLN', 'MAZATLÁN').str.replace('MAZATL\ufffdN', 'MAZATLÁN').str.strip()
 df_mayo['Equipo'] = df_mayo['Equipo'].astype(str).str.strip()
 
+# Función para guardar datos de Mayo de forma persistente
 def guardar_mayo(df):
     if usa_gsheets and conn is not None:
         conn.update(worksheet="Mayo", data=df)
@@ -271,6 +280,7 @@ df_final = pd.merge(
     how='outer'
 )
 
+# Rellenar valores nulos resultantes del outer join
 columnas_numericas_final = [
     'P. Porra Marzo', 'P. Actv.1 Marzo', 'P. Act. 3 Marzo', 'P. Act. 2 Slido Marzo',
     'Penalizacion Marzo', 'Extras Marzo', 'Total puntos Marzo', 'Total puntos Abril',
@@ -279,6 +289,7 @@ columnas_numericas_final = [
 for col in columnas_numericas_final:
     df_final[col] = pd.to_numeric(df_final[col], errors='coerce').fillna(0.0)
 
+# Calcular Puntos de Marzo sin Penalizaciones ni Extras
 df_final['Total Marzo Sin Penalizaciones'] = (
     df_final['P. Porra Marzo'] + 
     df_final['P. Actv.1 Marzo'] + 
@@ -286,14 +297,16 @@ df_final['Total Marzo Sin Penalizaciones'] = (
     df_final['P. Act. 2 Slido Marzo']
 )
 
+# Total Acumulado General (Excluye penalización y extras de Marzo de la tabla global)
 df_final['Total Acumulado General'] = df_final['Total Marzo Sin Penalizaciones'] + df_final['Total puntos Abril'] + df_final['Total Mayo']
 df_final['Total Acumulado General'] = df_final['Total Acumulado General'].round(2)
 
+# Total Acumulado Local (Incluye penalización y extras de Marzo para la vista por Sede)
 df_final['Total Acumulado Local'] = df_final['Total puntos Marzo'] + df_final['Total puntos Abril'] + df_final['Total Mayo']
 df_final['Total Acumulado Local'] = df_final['Total Acumulado Local'].round(2)
 
 # ----------------------------------------------------
-# 5. ESTRUCTURA DE PESTAÑAS
+# 5. ESTRUCTURA DE PESTAÑAS (REDEFINIDAS SEGÚN EL FEEDBACK)
 # ----------------------------------------------------
 tab1, tab2, tab3, tab4 = st.tabs([
     "🏆 Líderes de Torneo Mundialista", 
@@ -305,11 +318,13 @@ tab1, tab2, tab3, tab4 = st.tabs([
 # --- PESTAÑA 1: LÍDERES DE TORNEO MUNDIALISTA ---
 with tab1:
     st.subheader("⚽ Marcador Mundialista - Puntos Netos Acumulados")
-    st.info("Esta tabla general presenta el **Top 5** de equipos del Torneo Mundialista histórico. Se omiten las columnas de Penalizaciones y Extras para una clasificación global equitativa.")
+    st.info("Esta tabla general presenta el **Top 10** de equipos del Torneo Mundialista histórico. Se omiten las columnas de Penalizaciones y Extras para una clasificación global equitativa.")
     
+    # Filtrar solo sedes históricas
     df_general = df_final[df_final['SEDE'].isin(sedes_historicas)].copy()
     df_general_sorted = df_general.sort_values(by='Total Acumulado General', ascending=False)
     
+    # Líderes por sede histórica en una cuadrícula
     st.markdown("### 🥇 Campeones Proyectados por Confederación (Sede)")
     columnas_lideres = st.columns(4)
     for idx, sede in enumerate(sedes_historicas):
@@ -332,19 +347,17 @@ with tab1:
                 
     st.write("---")
     
-    st.markdown("### 📈 Top 5 del Campeonato Mundialista")
-    
-    # Reducido a Top 5 y eliminación estricta de duplicados
-    top_5 = df_general_sorted.drop_duplicates(subset=['SEDE', 'Equipo']).head(5)
-    
+    # Top 10 Equipos (Solicitado: Presentación del Top 10 ordenado del mejor al último)
+    st.markdown("### 📈 Top 10 del Campeonato Mundialista")
+    top_10 = df_general_sorted.head(10)
     fig_global = px.bar(
-        top_5,
+        top_10,
         x='Total Acumulado General',
         y='Equipo',
+        color='SEDE',
         orientation='h',
         labels={'Total Acumulado General': 'Puntos Totales (Campaña Mundialista)', 'Equipo': 'Selección / Club'},
-        color='Total Acumulado General', 
-        color_continuous_scale='Sunsetdark',
+        color_discrete_sequence=px.colors.sequential.Sunset_r, # Degradados magenta/naranja premium
         text='Total Acumulado General'
     )
     fig_global.update_layout(
@@ -354,14 +367,13 @@ with tab1:
         font_family="Poppins",
         font_color="#ffffff",
         xaxis=dict(showgrid=False),
-        yaxis_gridcolor='rgba(255,255,255,0.05)',
-        height=350,  # Altura reducida y ajustada para 5 barras
-        bargap=0.3   # Espacio extra entre las barras para que no se vean encimadas
+        yaxis_gridcolor='rgba(255,255,255,0.05)'
     )
     st.plotly_chart(fig_global, use_container_width=True)
     
-    st.markdown("### 📋 Tabla de Posiciones Oficial - Top 5")
-    df_tabla_gen = top_5[['SEDE', 'Equipo', 'Total Marzo Sin Penalizaciones', 'Total puntos Abril', 'Total Mayo', 'Total Acumulado General']].copy()
+    # Tabla General Top 10 Completa
+    st.markdown("### 📋 Tabla de Posiciones Oficial - Top 10")
+    df_tabla_gen = top_10[['SEDE', 'Equipo', 'Total Marzo Sin Penalizaciones', 'Total puntos Abril', 'Total Mayo', 'Total Acumulado General']].copy()
     df_tabla_gen.columns = ['Confederación / Sede', 'Selección / Club', 'Puntos Marzo (Netos)', 'Puntos Abril', 'Puntos Mayo', 'Total Acumulado']
     st.dataframe(
         df_tabla_gen,
@@ -397,7 +409,7 @@ with tab2:
             title=f"Marcador Local en {sede_sel}",
             labels={'Total Acumulado Local': 'Puntos de Grupo', 'Equipo': 'Selección'},
             color='Total Acumulado Local',
-            color_continuous_scale='Bluered',
+            color_continuous_scale='Bluered', # Gradientes azul/rojo
             text='Total Acumulado Local'
         )
         fig.update_layout(
@@ -423,57 +435,59 @@ with tab2:
 
 # --- PESTAÑA 3: TORNEO LOCAL (SOLO MAYO) ---
 with tab3:
-    st.subheader("🥅 Marcador de Torneo Local")
-    st.info("Visualización local de las sedes de la temporada de Mayo.")
+    st.subheader("🥅 Marcador de Torneo Local - Sedes Invitadas (Solo Mayo)")
+    st.info("Visualización local de las nuevas sedes que ingresaron a participar directamente en la temporada de Mayo.")
     
-    # Cargar directamente TODAS las sedes de la lista
-    sede_sel_nueva = st.selectbox("Selecciona la sede de Torneo Local:", sorted(SEDES_SOLO_MAYO), key="sede_sel_nueva")
+    # Detectar cuáles sedes de Mayo tienen datos
+    sedes_nuevas_con_datos = sorted(df_final[df_final['SEDE'].isin(SEDES_SOLO_MAYO)]['SEDE'].dropna().unique().tolist())
     
-    df_sede_nueva = df_final[df_final['SEDE'] == sede_sel_nueva].sort_values(by='Total Mayo', ascending=False)
-    
-    # Validamos si la sede está vacía o si sus equipos aún tienen 0 puntos registrados en total
-    if df_sede_nueva.empty:
-        st.warning(f"⚠️ Aún no hay selecciones registradas para el Estadio **{sede_sel_nueva}**. Ve a la pestaña **Panel de Carga (Staff)** para ficharlas.")
+    if not sedes_nuevas_con_datos:
+        st.info("💡 Aún no se han registrado selecciones para las sedes invitadas de Mayo. Para registrar una y calificarla, ve a la pestaña **Panel de Carga (Staff)**.")
     else:
-        ganador_row = df_sede_nueva.iloc[0]
-        nombre_ganador = ganador_row['Equipo']
-        puntos_ganador = ganador_row['Total Mayo']
+        sede_sel_nueva = st.selectbox("Selecciona la sede de Torneo Local:", sedes_nuevas_con_datos, key="sede_sel_nueva")
         
-        st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #00D4FF, #8B00FF); padding: 18px; border-radius: 12px; margin-bottom: 20px; color: white; box-shadow: 0px 4px 15px rgba(0, 212, 255, 0.3);">
-            <h4 style="margin:0; font-family:'Syncopate', sans-serif; font-size: 1.1rem; text-transform: uppercase; letter-spacing:0.05em;">🏆 Líder del Grupo Local en {sede_sel_nueva}: <b>{nombre_ganador}</b> con <b>{puntos_ganador} pts</b></h4>
-        </div>
-        """, unsafe_allow_html=True)
+        df_sede_nueva = df_final[df_final['SEDE'] == sede_sel_nueva].sort_values(by='Total Mayo', ascending=False)
         
-        fig = px.bar(
-            df_sede_nueva,
-            x='Total Mayo',
-            y='Equipo',
-            orientation='h',
-            title=f"Standings Temporales de Mayo en {sede_sel_nueva}",
-            labels={'Total Mayo': 'Goles / Puntos de Mayo', 'Equipo': 'Selección'},
-            color='Total Mayo',
-            color_continuous_scale='Electric', 
-            text='Total Mayo'
-        )
-        fig.update_layout(
-            yaxis={'categoryorder':'total ascending'},
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font_family="Poppins",
-            font_color="#ffffff",
-            xaxis=dict(showgrid=False)
-        )
-        st.plotly_chart(fig, use_container_width=True)
-        
-        st.markdown("### 📋 Marcador de Mayo")
-        df_tabla_sede_nueva = df_sede_nueva[['Equipo', 'P. Porra Mayo', 'P. Actv.1 Mayo', 'P. Act 2 Slido Mayo', 'P. Act 3 Mayo', 'Total Mayo']].copy()
-        df_tabla_sede_nueva.columns = ['Selección / Club', 'Porra Mayo', 'Act 1 Mayo', 'Act 2 Slido Mayo', 'Act 3 Mayo', 'Total Mayo']
-        st.dataframe(
-            df_tabla_sede_nueva,
-            use_container_width=True,
-            hide_index=True
-        )
+        if not df_sede_nueva.empty:
+            ganador_row = df_sede_nueva.iloc[0]
+            nombre_ganador = ganador_row['Equipo']
+            puntos_ganador = ganador_row['Total Mayo']
+            
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #00D4FF, #8B00FF); padding: 18px; border-radius: 12px; margin-bottom: 20px; color: white; box-shadow: 0px 4px 15px rgba(0, 212, 255, 0.3);">
+                <h4 style="margin:0; font-family:'Syncopate', sans-serif; font-size: 1.1rem; text-transform: uppercase; letter-spacing:0.05em;">🏆 Líder del Grupo Local en {sede_sel_nueva}: <b>{nombre_ganador}</b> con <b>{puntos_ganador} pts</b></h4>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            fig = px.bar(
+                df_sede_nueva,
+                x='Total Mayo',
+                y='Equipo',
+                orientation='h',
+                title=f"Standings Temporales de Mayo en {sede_sel_nueva}",
+                labels={'Total Mayo': 'Goles / Puntos de Mayo', 'Equipo': 'Selección'},
+                color='Total Mayo',
+                color_continuous_scale='Electric', # Estética azul-eléctrico a magenta
+                text='Total Mayo'
+            )
+            fig.update_layout(
+                yaxis={'categoryorder':'total ascending'},
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font_family="Poppins",
+                font_color="#ffffff",
+                xaxis=dict(showgrid=False)
+            )
+            st.plotly_chart(fig, use_container_width=True)
+            
+            st.markdown("### 📋 Marcador de Mayo")
+            df_tabla_sede_nueva = df_sede_nueva[['Equipo', 'P. Porra Mayo', 'P. Actv.1 Mayo', 'P. Act 2 Slido Mayo', 'P. Act 3 Mayo', 'Total Mayo']].copy()
+            df_tabla_sede_nueva.columns = ['Selección / Club', 'Porra Mayo', 'Act 1 Mayo', 'Act 2 Slido Mayo', 'Act 3 Mayo', 'Total Mayo']
+            st.dataframe(
+                df_tabla_sede_nueva,
+                use_container_width=True,
+                hide_index=True
+            )
 
 # --- PESTAÑA 4: PANEL DE CARGA (STAFF) ---
 with tab4:
@@ -494,10 +508,12 @@ with tab4:
             if not nombre_reg_clean:
                 st.error("Por favor, ingresa un nombre para la selección.")
             else:
+                # Comprobar si ya existe en df_mayo
                 existe = df_mayo[(df_mayo['SEDE'] == sede_reg) & (df_mayo['Equipo'].str.lower() == nombre_reg_clean.lower())]
                 if not existe.empty:
                     st.error(f"La selección '{nombre_reg_clean}' ya está fichada en el Estadio {sede_reg}.")
                 else:
+                    # Registrar en df_mayo
                     nuevo_eq = {
                         'SEDE': sede_reg,
                         'Equipo': nombre_reg_clean,
@@ -525,6 +541,7 @@ with tab4:
             equipos_sede = sorted(df_mayo[df_mayo['SEDE'] == sede_cal]['Equipo'].dropna().unique().tolist())
             equipo_cal = st.selectbox("2. Selecciona la Selección:", equipos_sede, key="equipo_cal_select")
             
+            # Obtener valores previos
             fila_actual = df_mayo[(df_mayo['SEDE'] == sede_cal) & (df_mayo['Equipo'] == equipo_cal)]
             porra_prev = float(fila_actual['P. Porra Mayo'].values[0]) if not fila_actual.empty else 0.0
             actv1_prev = float(fila_actual['P. Actv.1 Mayo'].values[0]) if not fila_actual.empty else 0.0
@@ -550,6 +567,7 @@ with tab4:
                     st.success(f"¡Marcador actualizado con éxito para {equipo_cal}!")
                     st.rerun()
 
+# Mensaje de conexión en la barra lateral
 if not usa_gsheets:
     st.sidebar.warning("⚠️ Modo de Prueba Local de la Cápsula (Puntos_Mayo_Local.xlsx).")
 else:
