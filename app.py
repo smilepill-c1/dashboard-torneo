@@ -211,7 +211,7 @@ usa_gsheets = False
 conn = None
 
 try:
-    if "gsheets" in st.secrets:
+    if "connections" in st.secrets and "gsheets" in st.secrets["connections"]:
         conn = st.connection("gsheets", type=GSheetsConnection)
         df_mayo = conn.read(worksheet="Mayo", ttl=2)
         usa_gsheets = True
