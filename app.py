@@ -24,14 +24,12 @@ st.markdown("""
         font-family: 'Syncopate', sans-serif;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.15em;
-        font-size: 2.6rem;
+        letter-spacing: 0.12em;
+        font-size: 2.2rem;
         background: linear-gradient(135deg, #00FF87 0%, #60EFFF 50%, #00D4FF 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         text-align: center;
-        margin-top: 15px;
-        margin-bottom: 5px;
         text-shadow: 0px 0px 30px rgba(0, 255, 135, 0.35);
     }
     
@@ -160,8 +158,22 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Títulos Principales de Portada
-st.markdown('<div class="main-header">🏆 Líderes de Torneo Mundialista ⚽</div>', unsafe_allow_html=True)
+# ----------------------------------------------------
+# VISUALIZACIÓN DE LOGOTIPOS EN ENCABEZADO SIMÉTRICO
+# ----------------------------------------------------
+col_logo1, col_text, col_logo2 = st.columns([1, 4, 1])
+
+with col_logo1:
+    if os.path.exists("SmilePill_All-in_blanco.png"):
+        st.image("SmilePill_All-in_blanco.png", width=140)
+
+with col_text:
+    st.markdown('<div class="main-header">🏆 Líderes de Torneo Mundialista ⚽</div>', unsafe_allow_html=True)
+
+with col_logo2:
+    if os.path.exists("image.png"):
+        st.image("image.png", width=140)
+
 st.markdown('<div class="gradient-divider"></div>', unsafe_allow_html=True)
 
 # ----------------------------------------------------
