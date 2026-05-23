@@ -211,13 +211,13 @@ usa_gsheets = False
 conn = None
 
 try:
-    if "connections" in st.secrets and "gsheets" in st.secrets["connections"]:
-        conn = st.connection("gsheets", type=GSheetsConnection)
-        df_mayo = conn.read(worksheet="Mayo", ttl=2)
-        usa_gsheets = True
-    else:
-        raise Exception("No configurado")
+    # Intentar conexión directa (st.connection maneja la búsqueda de secretos internamente)
+    conn = st.connection("gsheets", type=GSheetsConnection)
+    df_mayo = conn.read(worksheet="Mayo", ttl=2)
+    usa_gsheets = True
 except Exception as e:
+    # Mostrar el error real en la barra lateral para diagnóstico
+    st.sidebar.error(f"Error de Conexión GSheets: {e}")
     archivo_local = "Puntos_Mayo_Local.xlsx"
     if os.path.exists(archivo_local):
         df_mayo = pd.read_excel(archivo_local)
