@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from streamlit_gsheets import GSheetsConnection
+import subprocess
 import os
 
 # Configuración de la página
@@ -205,36 +205,19 @@ SEDES_SOLO_MAYO = [
 ]
 
 # ----------------------------------------------------
-# 3. CONEXIÓN A BASE DE DATOS (GOOGLE SHEETS / LOCAL)
+# 3. BASE DE DATOS INTEGRADA EN REPOSITORIO (SISTEMA AUTÓNOMO)
 # ----------------------------------------------------
-usa_gsheets = False
-conn = None
+archivo_persistente = "Puntos_Mayo_Local.xlsx"
 
-try:
-    # --- TEST DE CONECTIVIDAD BÁSICA (LECTURA PÚBLICA) ---
-    # Intentamos leer la hoja como un CSV público para verificar que el link y los permisos sean correctos
-    sheet_id = "1WaIxaJ4tuqNE5qkVif4JPOWx0HGmdVUV_-ISwRoBlug"
-    csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid=0"
-    test_df = pd.read_csv(csv_url)
-
-    # Si llegamos aquí, el link es público y accesible. Ahora intentamos la conexión de Streamlit.
-    conn = st.connection("gsheets", type=GSheetsConnection)
-    df_mayo = conn.read(worksheet="Mayo", ttl=2)
-    usa_gsheets = True
-except Exception as e:
-    st.sidebar.error(f"⚠️ Error de Conexión: {e}")
-    # Si falló el test de CSV, el problema es el LINK o los PERMISOS de Google.
-    # Si el test de CSV pasó pero el conn.read falló, el problema es el NOMBRE DE LA PESTAÑA o los SECRETOS.
-    archivo_local = "Puntos_Mayo_Local.xlsx"
-    if os.path.exists(archivo_local):
-        df_mayo = pd.read_excel(archivo_local)
-    else:
-        df_mayo = df_base[['SEDE', 'Equipo']].copy()
-        df_mayo['P. Porra Mayo'] = 0.0
-        df_mayo['P. Actv.1 Mayo'] = 0.0
-        df_mayo['P. Act 2 Slido Mayo'] = 0.0
-        df_mayo['P. Act 3 Mayo'] = 0.0
-        df_mayo.to_excel(archivo_local, index=False)
+if os.path.exists(archivo_persistente):
+    df_mayo = pd.read_excel(archivo_persistente)
+else:
+    df_mayo = df_base[['SEDE', 'Equipo']].copy()
+    df_mayo['P. Porra Mayo'] = 0.0
+    df_mayo['P. Actv.1 Mayo'] = 0.0
+    df_mayo['P. Act 2 Slido Mayo'] = 0.0
+    df_mayo['P. Act 3 Mayo'] = 0.0
+    df_mayo.to_excel(archivo_persistente, index=False)
 
 columnas_mayo = ['P. Porra Mayo', 'P. Actv.1 Mayo', 'P. Act 2 Slido Mayo', 'P. Act 3 Mayo']
 for col in columnas_mayo:
@@ -246,11 +229,17 @@ df_mayo['Total Mayo'] = df_mayo[columnas_mayo].sum(axis=1)
 df_mayo['SEDE'] = df_mayo['SEDE'].astype(str).str.replace('MAZATLN', 'MAZATLÁN').str.replace('MAZATL\ufffdN', 'MAZATLÁN').str.strip()
 df_mayo['Equipo'] = df_mayo['Equipo'].astype(str).str.strip()
 
+# Función con disparo de comandos Git automáticos para guardar en la nube sin Google Sheets
 def guardar_mayo(df):
-    if usa_gsheets and conn is not None:
-        conn.update(worksheet="Mayo", data=df)
-    else:
-        df.to_excel("Puntos_Mayo_Local.xlsx", index=False)
+    df.to_excel(archivo_persistente, index=False)
+    try:
+        subprocess.run(["git", "config", "user.name", "Mesa Arbitraje App"], check=False)
+        subprocess.run(["git", "config", "user.email", "staff@torneo.com"], check=False)
+        subprocess.run(["git", "add", archivo_persistente], check=True)
+        subprocess.run(["git", "commit", "-m", "⚽ Marcador actualizado por Staff desde Panel Web"], check=True)
+        subprocess.run(["git", "push"], check=True)
+    except Exception:
+        pass # Funciona localmente si no hay conexión git activa
 
 # ----------------------------------------------------
 # 4. UNIFICACIÓN DE DATOS (CONSOLIDADO)
@@ -323,7 +312,6 @@ with tab1:
                 
     st.write("---")
     
-    # FORZADO DE REGLA: Top 5 sin empalme en gráficos (Ajuste de Sintaxis Streamlit 2026)
     st.markdown("### 📈 Cuadro de Honor: Top 5 General del Campeonato")
     top_5 = df_general_sorted.drop_duplicates(subset=['SEDE', 'Equipo']).head(5)
     
@@ -348,7 +336,6 @@ with tab1:
         height=380,
         bargap=0.35
     )
-    # Reemplazo de parámetro descontinuado por la sintaxis moderna
     st.plotly_chart(fig_global, width='stretch')
     
     st.markdown("### 📋 Tabla de Posiciones Oficial - Top 5")
@@ -359,7 +346,7 @@ with tab1:
 # --- PESTAÑA 2: SEDES LÍDERES ---
 with tab2:
     st.subheader("🏟️ Estadísticas por Sede")
-    st.info("Análisis estadístico por sede histórica con aplicación de bonos y penalizaciones de comité arbitral.")
+    st.info("Análisis de estadísticas grupales con aplicación de bonificaciones y amonestaciones oficiales.")
     
     sede_sel = st.selectbox("Selecciona el Estadio / Sede a visualizar:", sedes_historicas, key="sede_sel_hist")
     df_sede = df_final[df_final['SEDE'] == sede_sel].sort_values(by='Total Acumulado Local', ascending=False)
@@ -523,8 +510,5 @@ with tab4:
                     st.success(f"¡Marcador actualizado con éxito para {equipo_cal}!")
                     st.rerun()
 
-# Mensaje de conexión en la barra lateral
-if not usa_gsheets:
-    st.sidebar.warning("⚠️ Modo de Prueba Local de la Cápsula (Puntos_Mayo_Local.xlsx).")
-else:
-    st.sidebar.success("⚡ Conexión Establecida - Base de Datos (Google Sheets)")
+# Barra lateral informativa
+st.sidebar.success("⚽ Base de Datos Autónoma Activa (.xlsx integrado)")
