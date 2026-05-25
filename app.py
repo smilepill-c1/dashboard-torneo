@@ -204,7 +204,25 @@ def cargar_datos_base():
     
     return df_clean
 
-df_base = cargar_datos_base()
+# Carga base inicial
+df_base_raw = cargar_datos_base()
+
+# --- INYECCIÓN DE HISTORIAL RETROACTIVO: ENSENADA (MARZO Y ABRIL) ---
+historial_ensenada = pd.DataFrame([
+    {
+        'SEDE': 'ENSENADA', 'Numero': 1, 'Equipo': 'Los intensos',
+        'P. Porra Marzo': 20, 'P. Actv.1 Marzo': 25, 'P. Act. 3 Marzo': 10, 'P. Act. 2 Slido Marzo': 19.17, 'Penalizacion Marzo': 0, 'Extras Marzo': 18, 'Total puntos Marzo': 92.17,
+        'P. Porra Abril': 20, 'P. Actv.1 Abril': 11.35, 'P. Act. 2 Slido Abril': 12.71, 'P. Act. 3 Abril': 0, 'Total puntos Abril': 44.06
+    }, # <-- AQUÍ FALTABA CERRAR EL PRIMER EQUIPO
+    {  # <-- AQUÍ FALTABA ABRIR EL SEGUNDO EQUIPO
+        'SEDE': 'ENSENADA', 'Numero': 2, 'Equipo': 'Apasionados P&G',
+        'P. Porra Marzo': 20, 'P. Actv.1 Marzo': 10, 'P. Act. 3 Marzo': 25, 'P. Act. 2 Slido Marzo': 17.92, 'Penalizacion Marzo': 0, 'Extras Marzo': 16, 'Total puntos Marzo': 88.92,
+        'P. Porra Abril': 20, 'P. Actv.1 Abril': 13.5, 'P. Act. 2 Slido Abril': 13.64, 'P. Act. 3 Abril': 25, 'Total puntos Abril': 72.14
+    }
+])
+
+# Consolidar base histórica agregando a Ensenada
+df_base = pd.concat([df_base_raw, historial_ensenada], ignore_index=True)
 sedes_historicas = sorted(df_base['SEDE'].dropna().unique().tolist())
 
 # ----------------------------------------------------
@@ -285,8 +303,11 @@ df_final['Total Acumulado Local'] = df_final['Total puntos Marzo'] + df_final['T
 df_final['Total Acumulado Local'] = df_final['Total Acumulado Local'].round(2)
 
 # ----------------------------------------------------
-# 5. ESTRUCTURA DE PESTAÑAS
+# 5. ESTRUCTURA DE PESTAÑAS (LISTAS GLOBALES)
 # ----------------------------------------------------
+# Forzamos a que Ensenada esté dentro de la lista de sedes del Torneo General
+sedes_competidoras = sorted(list(set(sedes_historicas)))
+
 tab1, tab2, tab3, tab4 = st.tabs([
     "🏆 Líderes de Torneo Mundialista", 
     "🏢 Sedes Líderes", 
@@ -299,16 +320,12 @@ with tab1:
     st.subheader("⚽ Marcador Mundialista - Puntos Netos Acumulados")
     st.info("Esta tabla presenta la clasificación del **Top 5** de escuadras del campeonato histórico. Se omiten penalizaciones de forma equitativa.")
     
-    # --- MODIFICACIÓN DE ENSENADA AL TORNEO GENERAL ---
-    sedes_competidoras = sedes_historicas + ["ENSENADA"]
     df_general = df_final[df_final['SEDE'].isin(sedes_competidoras)].copy()
-    # ----------------------------------------------------
-    
     df_general_sorted = df_general.sort_values(by='Total Acumulado General', ascending=False)
     
     st.markdown("### 🥇 Líderes Actuales de Grupo")
     columnas_lideres = st.columns(4)
-    for idx, sede in enumerate(sedes_competidoras): # Modificado para que muestre la tarjeta de Ensenada
+    for idx, sede in enumerate(sedes_competidoras):
         df_sede = df_general[df_general['SEDE'] == sede]
         col_idx = idx % 4
         if not df_sede.empty:
@@ -364,7 +381,7 @@ with tab2:
     st.subheader("🏟️ Estadísticas por Sede")
     st.info("Análisis de estadísticas grupales con aplicación de bonificaciones y amonestaciones oficiales.")
     
-    sede_sel = st.selectbox("Selecciona el Estadio / Sede a visualizar:", sedes_historicas, key="sede_sel_hist")
+    sede_sel = st.selectbox("Selecciona el Estadio / Sede a visualizar:", sedes_competidoras, key="sede_sel_hist")
     df_sede = df_final[df_final['SEDE'] == sede_sel].sort_values(by='Total Acumulado Local', ascending=False)
     
     if not df_sede.empty:
